@@ -1,0 +1,122 @@
+sprint: 0
+goal: Set up development environment and basic infrastructure
+duration: 1 week
+# Commands verified against official documentation (November 2025)
+
+sections:
+  - name: Nx Setup
+    tasks:
+      - id: nx-init
+        command: npx create-nx-workspace@latest . --preset=ts
+        notes: Using "." creates workspace in current directory
+      
+      - id: create-apps
+        commands:
+          - nx g @nx/node:app api
+          - nx g @nx/react:app admin --bundler=vite
+          - npm create astro@latest apps/public -- --template basics
+      
+      - id: create-libs
+        commands:
+          - nx g @nx/js:lib database
+          - nx g @nx/js:lib shared-types
+          - nx g @nx/js:lib utils
+          - nx g @nx/react:lib ui-shared
+
+  - name: Database
+    tasks:
+      - id: prisma-setup
+        commands:
+          - cd libs/database
+          - npx prisma init
+        
+      - id: schema
+        file: libs/database/prisma/schema.prisma
+        models:
+          - User: id, name, email, password, role, createdAt, updatedAt
+          - Category: id, name, description, parentId (self-relation), createdAt, updatedAt
+          - Cake: id, name, description, categoryId, allergens[], pricingType, pricePerKg, pricePerItem, minWeight, availableQuantities[], picture, createdAt, updatedAt
+          - FAQ: id, question, answer, createdAt, updatedAt
+          - Gallery: id, picture, description, createdAt, updatedAt
+          - Order: id, customerName, email, phone, message, cakeId, quantity, weight, deliveryType, deliveryAddress, deliveryFee, deliveryTimeSlot, totalPrice, status, createdAt, updatedAt
+        enums:
+          - Role: ADMIN, USER
+          - Allergen: GLUTEN, DAIRY, EGGS, NUTS, SOY, PEANUTS
+          - PricingType: PER_KG, PER_ITEM
+          - DeliveryType: PICKUP, DELIVERY
+          - OrderStatus: NEW, CONFIRMED, STARTED, READY, DELIVERED, PICKED_UP, COMPLETED, CANCELLED
+
+  - name: Backend
+    tasks:
+      - id: nestjs-setup
+        install_commands:
+          - "npm install @nestjs/core @nestjs/common @nestjs/platform-express @nestjs/jwt @nestjs/passport passport-jwt reflect-metadata rxjs"
+          - "npm install -D @swc/cli @swc/core"
+        
+      - id: api-structure
+        create:
+          - apps/api/src/app/app.module.ts
+          - apps/api/src/app/auth/auth.module.ts
+          - apps/api/src/app/cakes/cakes.module.ts
+          - apps/api/src/app/categories/categories.module.ts
+          - apps/api/src/app/orders/orders.module.ts
+          - apps/api/src/app/faq/faq.module.ts
+          - apps/api/src/app/gallery/gallery.module.ts
+
+  - name: Frontend
+    tasks:
+      - id: admin-setup
+        commands:
+          - cd apps/admin && npm install -D tailwindcss postcss autoprefixer
+          - cd apps/admin && npx tailwindcss init -p
+          - cd apps/admin && npx shadcn@latest init --defaults
+        
+      - id: public-setup
+        commands:
+          - cd apps/public && npx astro add react --yes
+          - cd apps/public && npx astro add tailwind --yes
+          - cd apps/public && npx shadcn@latest init --defaults
+
+  - name: Shared Types
+    tasks:
+      - id: type-definitions
+        file: libs/shared-types/src/index.ts
+        exports:
+          - models/user.types.ts
+          - models/category.types.ts (with tree structure)
+          - models/cake.types.ts (with pricing types)
+          - models/order.types.ts (with delivery fields)
+          - models/faq.types.ts
+          - models/gallery.types.ts
+          - enums/index.ts (all enums)
+
+  - name: Docker
+    tasks:
+      - id: docker-files
+        create:
+          - docker/Dockerfile.api
+          - docker/Dockerfile.admin
+          - docker/Dockerfile.public
+          - docker-compose.yml (postgres, api, admin, public)
+          - .env.example
+
+  - name: CI/CD
+    tasks:
+      - id: github-actions
+        create:
+          - .github/workflows/ci.yml (lint, test, build)
+          - .github/workflows/deploy.yml (docker build & push)
+      
+      - id: quality-tools
+        commands:
+          - npm install -D @biomejs/biome
+          - npx @biomejs/biome init
+          - npx husky init
+
+validation:
+  - nx serve api # (port 3000)
+  - nx serve admin # (port 4200)  
+  - nx run public:dev # (port 4321 - Astro uses different command)
+  - docker-compose up -d
+  - cd libs/database && npx prisma migrate dev
+  - Test type imports: @baker/shared-types, @baker/database, @baker/utils

@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Allergen {
+  GLUTEN
+  DAIRY
+  EGGS
+  NUTS
+  SOY
+  PEANUTS
+}
+
+enum PricingType {
+  PER_KG
+  PER_ITEM
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  STARTED
+  READY
+  DELIVERED
+  PICKED_UP
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  parentId    String?    @map("parent_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Category[]  @relation("CategoryTree")
+  cakes       Cake[]
+
+  @@map("categories")
+}
+
+model Cake {
+  id                  String       @id @default(uuid())
+  name                String
+  description         String?
+  categoryId          String       @map("category_id")
+  allergens           Allergen[]
+  pricingType         PricingType  @map("pricing_type")
+  pricePerKg          Float?       @map("price_per_kg")
+  pricePerItem        Float?       @map("price_per_item")
+  minWeight           Float?       @map("min_weight")
+  availableQuantities Int[]        @map("available_quantities")
+  picture             String?
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+  
+  category            Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  orders              Order[]
+
+  @@map("cakes")
+}
+
+model FAQ {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("faqs")
+}
+
+model Gallery {
+  id          String   @id @default(uuid())
+  picture     String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("gallery")
+}
+
+model Order {
+  id                String       @id @default(uuid())
+  customerName      String       @map("customer_name")
+  email             String
+  phone             String
+  message           String?
+  cakeId            String       @map("cake_id")
+  quantity          Int?
+  weight            Float?
+  deliveryType      DeliveryType @map("delivery_type")
+  deliveryAddress   String?      @map("delivery_address")
+  deliveryFee       Float?       @map("delivery_fee")
+  deliveryTimeSlot  String?      @map("delivery_time_slot")
+  totalPrice        Float        @map("total_price")
+  status            OrderStatus  @default(NEW)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  
+  cake              Cake         @relation(fields: [cakeId], references: [id], onDelete: Restrict)
+
+  @@map("orders")
+}
