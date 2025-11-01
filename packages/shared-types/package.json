@@ -1,0 +1,6 @@
+{
+  "name": "@baker/shared-types",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}

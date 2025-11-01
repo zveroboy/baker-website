@@ -193,3 +193,4 @@ This plan follows an iterative approach where each sprint delivers working, valu
 - Order workflow: New → Confirmed → Started → Ready → Picked up/Delivered → Completed (Admin can cancel at any stage)
 - Payment handled outside the system
 - Delivery options with admin-set fees and time slots
+- **Website language: Russian** 

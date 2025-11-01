@@ -1,0 +1,393 @@
+sprint: 2
+goal: Secure admin access
+duration: 1 week
+
+sections:
+  - name: Database Setup
+    tasks:
+      - id: create-admin-user
+        description: Create initial admin user
+        file: libs/database/prisma/seed.ts
+        steps:
+          - Create seed file for database
+          - Hash password using bcrypt
+          - Create admin user with ADMIN role
+          - Run seed: "cd libs/database && npx prisma db seed"
+        packages_needed:
+          - bcrypt and @types/bcrypt
+
+  - name: Backend - Authentication Module
+    tasks:
+      - id: install-auth-packages
+        description: Install authentication dependencies
+        commands:
+          - cd apps/api && npm install bcrypt
+          - cd apps/api && npm install -D @types/bcrypt
+      
+      - id: create-auth-module
+        description: Create NestJS auth module structure
+        files:
+          - apps/api/src/app/auth/auth.module.ts
+          - apps/api/src/app/auth/auth.controller.ts
+          - apps/api/src/app/auth/auth.service.ts
+          - apps/api/src/app/auth/dto/login.dto.ts
+          - apps/api/src/app/auth/dto/auth-response.dto.ts
+          - apps/api/src/app/auth/strategies/jwt.strategy.ts
+          - apps/api/src/app/auth/guards/jwt-auth.guard.ts
+        
+      - id: create-users-module
+        description: Create users module for user management
+        files:
+          - apps/api/src/app/users/users.module.ts
+          - apps/api/src/app/users/users.service.ts
+        steps:
+          - Create service to find user by email
+          - Integrate with Prisma client from @baker/database
+      
+      - id: implement-jwt-auth
+        description: Implement JWT authentication
+        files:
+          - apps/api/src/app/auth/auth.service.ts
+        implement:
+          - validateUser(email, password) - compare bcrypt hash
+          - login(user) - generate JWT token with user id and role
+          - Use @nestjs/jwt to sign tokens
+        jwt_config:
+          - secret: process.env.JWT_SECRET
+          - expiresIn: "7d"
+      
+      - id: implement-jwt-strategy
+        description: Create JWT validation strategy
+        file: apps/api/src/app/auth/strategies/jwt.strategy.ts
+        implement:
+          - Extend PassportStrategy
+          - Validate JWT token
+          - Extract user from payload
+          - Return user object for request
+      
+      - id: create-auth-endpoints
+        description: Create authentication endpoints
+        file: apps/api/src/app/auth/auth.controller.ts
+        endpoints:
+          - POST /api/auth/login - Login endpoint
+          - POST /api/auth/validate - Validate token endpoint
+          - GET /api/auth/me - Get current user (protected)
+        
+      - id: update-app-module
+        description: Wire up auth module
+        file: apps/api/src/app/app.module.ts
+        steps:
+          - Import AuthModule
+          - Import UsersModule
+          - Configure JwtModule globally
+          - Add modules to imports array
+
+  - name: Frontend - State Management
+    tasks:
+      - id: install-state-packages
+        description: Install TanStack Query and dependencies
+        commands:
+          - cd apps/admin && npm install @tanstack/react-query axios
+          - cd apps/admin && npm install react-router-dom
+        notes: TanStack Query for API state, axios for HTTP, react-router for routing
+      
+      - id: create-query-client
+        description: Set up TanStack Query client
+        file: apps/admin/src/lib/query-client.ts
+        implement:
+          - Create QueryClient with default options
+          - Configure retry, staleTime, cacheTime
+          - Export queryClient instance
+      
+      - id: create-api-client
+        description: Create axios API client with auth interceptor
+        file: apps/admin/src/lib/api.ts
+        implement:
+          - Base URL: http://localhost:3000/api
+          - Request interceptor to add Authorization header from localStorage
+          - Response interceptor to handle 401 (clear token, redirect to login)
+          - Export api instance
+          - Helper functions: getToken(), setToken(), clearToken()
+      
+      - id: create-auth-context
+        description: Create simple auth context
+        file: apps/admin/src/contexts/AuthContext.tsx
+        implement:
+          - Context with: user, isAuthenticated, logout()
+          - Provider component
+          - useAuth hook
+          - Store token in localStorage only
+          - User data comes from TanStack Query
+        notes: Minimal context - TanStack Query handles the heavy lifting
+      
+      - id: create-auth-hooks
+        description: Create TanStack Query auth hooks
+        file: apps/admin/src/hooks/use-auth.ts
+        hooks:
+          - useLogin() - useMutation for login (POST /auth/login)
+          - useCurrentUser() - useQuery for current user (GET /auth/me)
+          - useLogout() - Clear token and invalidate queries
+        features:
+          - Automatic caching of user data
+          - Automatic refetch on window focus
+          - Error handling built-in
+          - Loading states built-in
+
+  - name: v0.dev Component Generation
+    tasks:
+      - id: v0-login-page
+        description: Generate login page with form
+        v0_prompt: |
+          Create a login page for an admin panel with:
+          
+          Layout:
+          - Centered card on full-screen background
+          - Subtle gradient or pattern background
+          - Logo/heading: "Панель Администратора" (Admin Panel)
+          - Subheading: "Войдите в систему" (Sign in to your account)
+          
+          Form Fields:
+          - Email input with label "Email"
+          - Password input with label "Пароль" (Password)
+          - "Показать пароль" toggle (Show password)
+          - Remember me checkbox (optional)
+          - Submit button: "Войти" (Sign In)
+          - Loading state for button
+          - Error message display area
+          
+          Features:
+          - Form validation (email format, required fields)
+          - Show error messages in Russian
+          - Disable button while submitting
+          - Clean, professional admin look
+          - Use Tailwind v4 and Shadcn UI
+          - Responsive design
+          
+          Note: Return only the form component, I'll handle state management separately
+        
+        output_file: apps/admin/src/components/auth/LoginForm.tsx
+        
+        alternative_simpler_prompt: |
+          Create an admin login form with email, password fields, and submit button.
+          Use Shadcn UI form components, Tailwind v4.
+          Labels in Russian: Email, Пароль, button "Войти".
+          Show loading state and error messages.
+  
+  - name: Frontend - Pages & Routing
+    tasks:
+       - id: setup-routing
+         description: Set up React Router and Query Provider
+         file: apps/admin/src/App.tsx
+         steps:
+          - Import QueryClientProvider from @tanstack/react-query
+          - Import queryClient
+          - Wrap app in QueryClientProvider
+          - Import BrowserRouter, Routes, Route from react-router-dom
+          - Create routes for /login and / (dashboard)
+          - Wrap dashboard route in ProtectedRoute component
+          - Add AuthProvider wrapper
+      
+             - id: create-login-page
+         description: Create login page
+         file: apps/admin/src/pages/LoginPage.tsx
+         steps:
+           - Import LoginForm from v0.dev component
+           - Use useLogin() hook from TanStack Query
+           - Handle form submission with login.mutate()
+           - On success, store token and redirect to dashboard
+           - Show error from mutation
+           - Loading state from mutation.isPending
+      
+      - id: create-dashboard-placeholder
+        description: Create simple dashboard page
+        file: apps/admin/src/pages/DashboardPage.tsx
+        content:
+          - Welcome message with user name
+          - "Добро пожаловать в панель администратора"
+          - Logout button
+          - Placeholder for future dashboard content
+      
+             - id: create-protected-route
+         description: Create protected route wrapper
+         file: apps/admin/src/components/auth/ProtectedRoute.tsx
+         implement:
+          - Use useCurrentUser() hook to check authentication
+          - If isLoading, show loading spinner
+          - If error or no user, redirect to /login
+          - If user exists, render children
+          - TanStack Query automatically validates token on mount
+
+  - name: Component Integration
+    tasks:
+      - id: install-shadcn-components
+        description: Add required Shadcn components for login
+        commands:
+          - cd apps/admin && npx shadcn@canary add form
+          - cd apps/admin && npx shadcn@canary add input
+          - cd apps/admin && npx shadcn@canary add label
+          - cd apps/admin && npx shadcn@canary add card
+        notes: Form components needed for login page
+      
+      - id: integrate-login-form
+        description: Integrate v0.dev login form
+        steps:
+          - Copy LoginForm from v0.dev to apps/admin/src/components/auth/LoginForm.tsx
+          - Remove any Next.js imports (replace Link with regular a tags)
+          - Ensure all Shadcn imports use @/ paths
+          - Accept onSubmit prop: (email: string, password: string) => Promise<void>
+          - Accept error prop: string | null
+          - Accept isLoading prop: boolean
+          - Test component renders correctly
+      
+             - id: wire-up-authentication
+         description: Connect login form to auth logic
+         file: apps/admin/src/pages/LoginPage.tsx
+         implementation:
+           - Use useLogin() mutation hook
+           - Pass mutation.mutate to form onSubmit
+           - Pass mutation.error to form error prop
+           - Pass mutation.isPending to form isLoading prop
+           - Use useNavigate to redirect on success
+           - TanStack Query handles all state automatically
+
+  - name: Environment & Configuration
+    tasks:
+      - id: update-env
+        description: Update environment variables
+        file: .env.example
+        add:
+          - JWT_SECRET (add if not present)
+          - API_URL for admin app
+        
+      - id: configure-api-proxy
+        description: Configure Vite proxy for API calls
+        file: apps/admin/vite.config.ts
+        add:
+          - server.proxy configuration
+          - Proxy /api to http://localhost:3000/api
+          - Enables API calls without CORS issues in development
+
+  - name: Testing & Validation
+    tasks:
+      - id: test-login-flow
+        description: Test complete authentication flow
+        steps:
+          - Start API: nx serve api
+          - Start Admin: nx serve admin
+          - Create seed data: cd libs/database && npx prisma db seed
+          - Navigate to http://localhost:4200
+          - Should redirect to /login
+          - Enter admin credentials
+          - Should redirect to dashboard after login
+          - Verify token stored in localStorage
+          - Refresh page - should stay logged in
+          - Click logout - should return to login
+      
+      - id: test-protected-routes
+        description: Verify route protection
+        verify:
+          - Cannot access /dashboard without token
+          - Invalid token redirects to login
+          - Valid token allows access
+          - Token expiration handled correctly
+      
+      - id: test-error-handling
+        description: Test error scenarios
+        verify:
+          - Wrong password shows error
+          - Non-existent user shows error
+          - Network error handled gracefully
+          - Form validation works (email format, required fields)
+
+validation:
+  - API /api/auth/login endpoint returns JWT token
+  - Admin app redirects unauthenticated users to /login
+  - Login form displays without errors
+  - Successful login redirects to dashboard
+  - Dashboard shows user information
+  - Logout clears token and redirects to login
+  - Protected routes check authentication
+  - Token persists across page refreshes
+
+v0_workflow:
+  - title: Generate Login Form with v0.dev
+    steps:
+      - Go to https://v0.dev
+      - Use the v0_prompt from task v0-login-page
+      - Generate the component
+      - Copy the component code
+      - Paste into apps/admin/src/components/auth/LoginForm.tsx
+      - Update the component to accept props:
+        - onSubmit: (email: string, password: string) => Promise<void>
+        - error: string | null
+        - isLoading: boolean
+      - Replace any Next.js imports
+      - Test the form renders
+  
+  - title: v0.dev Tips for Admin Components
+    tips:
+      - Admin components can be in English or Russian (your choice)
+      - Keep forms simple and functional
+      - Focus on usability over fancy design
+      - v0.dev understands "admin panel" context well
+      - You can ask for variations if first result isn't perfect
+      - Specify loading states and error handling in prompts
+
+implementation_order:
+  1. Backend First:
+     - Create auth module and endpoints (2-3 hours)
+     - Create seed data with admin user (30 min)
+     - Test endpoints with curl/Postman (30 min)
+  
+  2. Frontend Setup:
+     - Install dependencies and set up routing (1 hour)
+     - Create auth store and API client (1-2 hours)
+  
+  3. UI Components:
+     - Generate login form with v0.dev (30 min)
+     - Integrate and wire up (1-2 hours)
+  
+  4. Protected Routes:
+     - Implement route protection (1 hour)
+     - Create dashboard placeholder (30 min)
+  
+  5. Testing:
+     - End-to-end flow testing (1-2 hours)
+     - Fix issues (1 hour buffer)
+
+notes:
+  - Start with backend - easier to test with curl
+  - Use bcrypt for password hashing (industry standard)
+  - JWT secret should be strong in production
+  - localStorage for token is fine for admin panel
+  - TanStack Query advantages:
+    - Automatic caching and refetching
+    - Built-in loading and error states
+    - No manual state management needed
+    - Less code than Zustand for this use case
+    - Perfect for API-driven state
+  - Consider httpOnly cookies for production (optional enhancement)
+  - Admin panel can be in Russian or English (your preference)
+  - Focus on security: validate tokens, hash passwords, protect routes
+  
+completion_checklist:
+  - [ ] Database has admin user seeded
+  - [ ] POST /api/auth/login endpoint works
+  - [ ] GET /api/auth/me endpoint works (protected)
+  - [ ] JWT tokens generated and validated correctly
+  - [ ] Admin app has routing configured
+  - [ ] Login page displays and works
+  - [ ] Successful login stores token and redirects
+  - [ ] Dashboard shows logged-in user info
+  - [ ] Logout clears token and redirects
+  - [ ] Protected routes require authentication
+  - [ ] Token persists across page refreshes
+  - [ ] Error messages display correctly
+  - [ ] Form validation works
+
+time_estimate:
+  - Backend setup: 3-4 hours
+  - Frontend state management: 2-3 hours
+  - v0.dev + integration: 2 hours
+  - Testing and fixes: 2-3 hours
+  - Total: 1-2 days for working authentication
