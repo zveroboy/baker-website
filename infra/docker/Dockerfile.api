@@ -46,6 +46,10 @@ COPY --from=builder /app/packages/api/dist ./packages/api/dist
 # Copy built database package (including dist and prisma)
 COPY --from=builder /app/packages/database ./packages/database
 
+# Create symlink for @baker/database workspace package
+RUN mkdir -p node_modules/@baker && \
+    ln -sf /app/packages/database node_modules/@baker/database
+
 # Expose port
 EXPOSE 3000
 
