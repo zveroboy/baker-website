@@ -33,6 +33,7 @@ COPY --from=builder /app/tsconfig.base.json ./tsconfig.base.json
 COPY --from=builder /app/turbo.json ./turbo.json
 RUN npm run build --workspace=@baker/database
 RUN npm run build --workspace=@baker/api
+RUN npm run db:generate --workspace=@baker/database
 
 # Runner stage
 FROM base AS runner
