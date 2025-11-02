@@ -1,27 +1,40 @@
-FROM node:22-alpine AS builder
-
+# This is based on Turborepo's official Docker example
+FROM node:22-alpine AS base
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy ALL files - simple and works
+# Prune the workspace to include only @baker/api and its dependencies
+FROM base AS pruner
 COPY . .
+RUN npx turbo prune @baker/api --docker
 
-# Install dependencies and build
+# Build the project
+FROM base AS builder
+WORKDIR /app
+
+# First install dependencies (as they change less often)
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
 RUN npm ci
+
+# Build the project
+COPY --from=pruner /app/out/full/ .
 RUN npm run build --workspace=@baker/database
 RUN npm run build --workspace=@baker/api
 
-# Production stage - keep it simple
-FROM node:22-alpine
-
+# Runner stage
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 RUN apk add --no-cache dumb-init
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-# Copy EVERYTHING from builder - this ensures all symlinks work
-COPY --from=builder /app .
+# Copy the entire workspace structure
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 
-# Remove dev dependencies and source files to reduce size
-RUN rm -rf packages/*/src packages/*/.turbo
+USER nodejs
 
 EXPOSE 3000
 
