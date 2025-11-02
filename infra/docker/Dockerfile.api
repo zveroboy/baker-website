@@ -1,40 +1,47 @@
-# This is based on Turborepo's official Docker example
+# Based on official Turborepo Docker documentation
 FROM node:22-alpine AS base
+
+FROM base AS builder
+RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Prune the workspace to include only @baker/api and its dependencies
-FROM base AS pruner
-COPY . .
-RUN npx turbo prune @baker/api --docker
+# Install turbo globally
+RUN npm install -g turbo@latest
 
-# Build the project
-FROM base AS builder
+# Copy everything first
+COPY . .
+
+# Prune the monorepo for the api workspace
+RUN turbo prune @baker/api --docker
+
+# Install dependencies stage
+FROM base AS installer
+RUN apk update
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# First install dependencies (as they change less often)
-COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/out/package-lock.json ./package-lock.json
+# First install the dependencies (as they change less often)
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/package-lock.json ./package-lock.json
 RUN npm ci
 
 # Build the project
-COPY --from=pruner /app/out/full/ .
-# Copy tsconfig.base.json that turbo prune misses
-COPY --from=pruner /app/tsconfig.base.json ./tsconfig.base.json
-RUN npm run build --workspace=@baker/database
-RUN npm run build --workspace=@baker/api
+COPY --from=builder /app/out/full/ .
+RUN npm run build
 
 # Runner stage
-FROM node:22-alpine AS runner
+FROM base AS runner
 WORKDIR /app
 
 RUN apk add --no-cache dumb-init
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
 
-# Copy the entire workspace structure
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
+# Copy built application
+COPY --from=installer /app/package*.json ./
+COPY --from=installer /app/node_modules ./node_modules
+COPY --from=installer /app/packages ./packages
 
 USER nodejs
 
