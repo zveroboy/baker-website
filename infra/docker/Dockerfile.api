@@ -17,6 +17,8 @@ RUN turbo prune @baker/api --docker
 
 # Install dependencies stage
 FROM base AS installer
+ARG PRISMA_GENERATE_DATABASE_URL="postgresql://user:password@localhost:5432/placeholder"
+ENV DATABASE_URL=${PRISMA_GENERATE_DATABASE_URL}
 RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -34,6 +36,7 @@ COPY --from=builder /app/turbo.json ./turbo.json
 RUN npm run build --workspace=@baker/database
 RUN npm run build --workspace=@baker/api
 RUN npm run db:generate --workspace=@baker/database
+ENV DATABASE_URL=""
 
 # Runner stage
 FROM base AS runner
