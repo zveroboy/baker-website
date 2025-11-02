@@ -46,8 +46,18 @@ COPY --from=builder /app/packages/api/dist ./packages/api/dist
 # Copy built database package (including dist and prisma) 
 COPY --from=builder /app/packages/database ./packages/database
 
-# Install production dependencies (this will properly handle workspace symlinks)
-RUN npm ci --production --workspace=packages/api --include-workspace-root
+# Copy node_modules from builder (includes all dependencies)
+COPY --from=builder /app/node_modules ./node_modules
+
+# CRITICAL: Recreate the workspace symlink for @baker/database
+# This is necessary because Docker doesn't preserve symlinks when copying
+RUN rm -rf node_modules/@baker/database && \
+    mkdir -p node_modules/@baker && \
+    ln -s /app/packages/database node_modules/@baker/database
+
+# Verify the symlink was created correctly (for debugging)
+RUN ls -la node_modules/@baker/ && \
+    ls -la node_modules/@baker/database/
 
 # Change ownership to nodejs user
 RUN chown -R nodejs:nodejs /app
