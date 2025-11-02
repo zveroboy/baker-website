@@ -29,9 +29,10 @@ RUN npm ci
 # Build the project
 COPY --from=builder /app/out/full/ .
 # Copy root config files that turbo prune doesn't include
-COPY --from=builder /app/tsconfig.base.json ./
-COPY --from=builder /app/turbo.json ./
-RUN npm run build
+COPY --from=builder /app/tsconfig.base.json ./tsconfig.base.json
+COPY --from=builder /app/turbo.json ./turbo.json
+RUN npm run build --workspace=@baker/database
+RUN npm run build --workspace=@baker/api
 
 # Runner stage
 FROM base AS runner
