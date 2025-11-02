@@ -1,4 +1,4 @@
-import { Navigation } from "@/components/ui/navigation"
+import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Wheat, Leaf, Cake, Clock, Phone, Mail, MapPin, Facebook, Instagram } from "lucide-react"

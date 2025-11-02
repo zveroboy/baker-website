@@ -9,13 +9,14 @@ This plan follows an iterative approach where each sprint delivers working, valu
 **Goal**: Set up the development environment and basic infrastructure
 
 **Deliverables**:
-- Nx monorepo setup with apps structure
+- Turborepo monorepo setup with packages/ structure
 - Docker Compose configuration
-- Basic CI/CD pipeline with GitHub Actions
 - Database schema with Prisma (including tree categories, allergens enum, flexible pricing)
 - Development environment documentation
 
 **Value**: Ready-to-code environment for all future work
+
+**Tech Stack Decision**: Migrated from Nx to Turborepo for simpler configuration and better build reliability. Using SWC for NestJS (as recommended), Vite for React admin, Astro for public site.
 
 ---
 
@@ -39,15 +40,37 @@ This plan follows an iterative approach where each sprint delivers working, valu
 **Features**:
 - NestJS backend with JWT auth
 - Admin login page (React + Shadcn UI)
-- Session management with React Context/Zustand
+- Session management with TanStack Query + React Context
 - Protected admin routes
 - v0.dev generated login form
+- localStorage token storage (to be upgraded to httpOnly cookies in Sprint 8)
 
 **Value**: Secure foundation for all admin features
 
+**Tech Stack Decisions** (Full TanStack Stack): 
+- TanStack Query for server state management (automatic caching, built-in loading/error states)
+- TanStack Router for type-safe routing (built-in auth guards, better TypeScript than React Router)
+- TanStack Form + Zod for form validation (headless, granular reactivity, type-safe schemas)
+- ky for HTTP client (smaller than axios, modern fetch-based, better TypeScript)
+- localStorage for tokens in Sprint 2 (simple), httpOnly cookies deferred to Sprint 9
+
 ---
 
-### Sprint 3: Cake Catalog (Read-Only) (1 week)
+### Sprint 3: FAQ (3-4 days)
+**Goal**: FAQ content management
+
+**Features**:
+- Public FAQ page (Astro with React accordion component)
+- Admin CRUD for FAQs (React + Shadcn UI)
+- Drag-and-drop reordering
+- Published/unpublished status
+- v0.dev generated FAQ accordion
+
+**Value**: Better customer information and reduced support burden
+
+---
+
+### Sprint 4: Cake Catalog (Read-Only) (1 week)
 **Goal**: Showcase products to customers
 
 **Features**:
@@ -61,7 +84,7 @@ This plan follows an iterative approach where each sprint delivers working, valu
 
 ---
 
-### Sprint 4: Admin Cake Management (1.5 weeks)
+### Sprint 5: Admin Cake Management (1.5 weeks)
 **Goal**: Manage cake inventory
 
 **Features**:
@@ -77,7 +100,7 @@ This plan follows an iterative approach where each sprint delivers working, valu
 
 ---
 
-### Sprint 5: Order System (2 weeks)
+### Sprint 6: Order System (2 weeks)
 **Goal**: Accept customer orders
 
 **Features**:
@@ -93,21 +116,23 @@ This plan follows an iterative approach where each sprint delivers working, valu
 
 ---
 
-### Sprint 6: FAQ & Gallery (1 week)
-**Goal**: Enhanced content management
+### Sprint 7: Gallery (1 week)
+**Goal**: Visual showcase
 
 **Features**:
-- Public FAQ page (Astro with React accordion component)
 - Public gallery (Astro with React lightbox component)
-- Admin CRUD for both (React + Shadcn UI)
-- Image optimization
-- v0.dev gallery and FAQ components
+- Admin CRUD for gallery images (React + Shadcn UI)
+- S3/MinIO image upload with drag-and-drop
+- Automatic thumbnail generation with sharp
+- Image optimization (WebP format)
+- Drag-and-drop reordering
+- v0.dev gallery components
 
-**Value**: Better customer information and visual showcase
+**Value**: Visual showcase of bakery products and creations
 
 ---
 
-### Sprint 7: Admin Dashboard (1 week)
+### Sprint 8: Admin Dashboard (1 week)
 **Goal**: Business insights
 
 **Features**:
@@ -121,7 +146,7 @@ This plan follows an iterative approach where each sprint delivers working, valu
 
 ---
 
-### Sprint 8: Polish & Enhancement (1 week)
+### Sprint 9: Polish & Enhancement (1 week)
 **Goal**: Production readiness
 
 **Features**:
@@ -130,6 +155,7 @@ This plan follows an iterative approach where each sprint delivers working, valu
 - Error handling
 - User feedback improvements
 - Documentation
+- **Security upgrade**: Migrate from localStorage to httpOnly cookies for JWT tokens
 
 **Value**: Professional, production-ready application
 
@@ -160,17 +186,18 @@ This plan follows an iterative approach where each sprint delivers working, valu
 - **Sprint 0**: Development environment fully operational
 - **Sprint 1**: Website accessible to public
 - **Sprint 2**: Admin can securely log in
-- **Sprint 3**: Customers can view products
-- **Sprint 4**: Admin can manage products
-- **Sprint 5**: Orders can be received
-- **Sprint 6**: Full content management
-- **Sprint 7**: Business insights available
-- **Sprint 8**: Production-ready with <2s load time
+- **Sprint 3**: FAQ page live with content management
+- **Sprint 4**: Customers can view products
+- **Sprint 5**: Admin can manage products
+- **Sprint 6**: Orders can be received
+- **Sprint 7**: Gallery page live with image management
+- **Sprint 8**: Business insights available
+- **Sprint 9**: Production-ready with <2s load time
 
 ## Risk Management
 
 ### Technical Risks
-- **S3 Integration**: Test early in Sprint 4
+- **S3 Integration**: Test early in Sprint 5 (cakes) and Sprint 7 (gallery)
 - **Email Delivery**: Have backup SMTP options
 - **Performance**: Monitor from Sprint 1
 
@@ -180,7 +207,7 @@ This plan follows an iterative approach where each sprint delivers working, valu
 - **Data Loss**: Implement backups in Sprint 0
 
 ## Notes
-- Total estimated time: 10.5 weeks for MVP
+- Total estimated time: 10.5-11 weeks for MVP
 - Deploy to staging after each sprint
 - Gather user feedback continuously
 - Adjust future sprints based on learnings

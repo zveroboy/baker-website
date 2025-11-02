@@ -1,0 +1,461 @@
+sprint: 3
+goal: FAQ Content Management
+duration: 3-4 days
+
+sections:
+  - name: Database Setup
+    tasks:
+      - id: add-faq-model
+        status: pending
+        description: Add FAQ model to Prisma schema
+        file: libs/database/prisma/schema.prisma
+        model:
+          FAQ:
+            - id: String (cuid)
+            - question: String (Russian)
+            - answer: String (Russian, text field)
+            - order: Int (for manual sorting)
+            - isPublished: Boolean
+            - createdAt: DateTime
+            - updatedAt: DateTime
+        steps:
+          - Add FAQ model to schema.prisma
+          - Run: cd libs/database && npx prisma migrate dev --name add-faq
+          - Run: cd libs/database && npx prisma generate
+      
+      - id: create-faq-seed-data
+        status: pending
+        description: Add sample FAQ data
+        file: libs/database/prisma/seed.ts
+        steps:
+          - Create 3-5 sample FAQ entries in Russian
+          - Example questions: pricing, ordering, delivery, custom cakes, allergens
+          - Run: cd libs/database && npm run db:seed
+
+  - name: Backend - FAQ Module
+    tasks:
+      - id: create-faq-module
+        status: pending
+        description: Create NestJS FAQ module structure
+        files:
+          - apps/api/src/app/faq/faq.module.ts
+          - apps/api/src/app/faq/faq.controller.ts
+          - apps/api/src/app/faq/faq.service.ts
+          - apps/api/src/app/faq/dto/create-faq.dto.ts
+          - apps/api/src/app/faq/dto/update-faq.dto.ts
+          - apps/api/src/app/faq/dto/faq-response.dto.ts
+      
+      - id: implement-faq-service
+        status: pending
+        description: Implement FAQ CRUD operations
+        file: apps/api/src/app/faq/faq.service.ts
+        methods:
+          - findAll(includeUnpublished: boolean) - Get all FAQs (ordered by order field)
+          - findOne(id: string) - Get single FAQ
+          - create(createFaqDto) - Create new FAQ
+          - update(id: string, updateFaqDto) - Update FAQ
+          - delete(id: string) - Delete FAQ
+          - reorder(ids: string[]) - Update order of FAQs
+        notes: Integrate with PrismaService from @baker/database
+      
+      - id: create-faq-dtos
+        status: pending
+        description: Create validation DTOs for FAQ
+        files:
+          - apps/api/src/app/faq/dto/create-faq.dto.ts
+          - apps/api/src/app/faq/dto/update-faq.dto.ts
+        validation:
+          - question: Required, min 3 chars
+          - answer: Required, min 10 chars
+          - order: Optional number
+          - isPublished: Optional boolean, defaults to true
+        packages_needed:
+          - class-validator
+          - class-transformer
+      
+      - id: create-faq-endpoints
+        status: pending
+        description: Create FAQ REST endpoints
+        file: apps/api/src/app/faq/faq.controller.ts
+        endpoints:
+          - GET /api/faq - Get all published FAQs (public)
+          - GET /api/faq/all - Get all FAQs including unpublished (admin only)
+          - GET /api/faq/:id - Get single FAQ (public if published)
+          - POST /api/faq - Create FAQ (admin only)
+          - PATCH /api/faq/:id - Update FAQ (admin only)
+          - DELETE /api/faq/:id - Delete FAQ (admin only)
+          - POST /api/faq/reorder - Reorder FAQs (admin only)
+        guards:
+          - Use @UseGuards(JwtAuthGuard) for admin endpoints
+          - Public endpoints don't need guards
+      
+      - id: update-app-module-faq
+        status: pending
+        description: Wire up FAQ module
+        file: apps/api/src/app/app.module.ts
+        steps:
+          - Import FaqModule
+          - Add to imports array
+
+  - name: v0.dev Component Generation
+    tasks:
+      - id: v0-faq-accordion
+        status: pending
+        description: Generate FAQ accordion UI
+        v0_prompt: |
+          Create a beautiful FAQ accordion component with:
+          
+          Layout:
+          - Section title: "Часто Задаваемые Вопросы" (FAQ)
+          - List of FAQ items with accordion behavior
+          - One item open at a time
+          - Smooth expand/collapse animations
+          
+          FAQ Item Structure:
+          - Question text (bold, larger font)
+          - Expand/collapse icon (chevron)
+          - Answer text (regular font, good line spacing)
+          
+          Requirements:
+          - Use Shadcn UI Accordion component
+          - Use Tailwind v4
+          - Clean, readable design
+          - Good spacing and typography
+          - Responsive
+          - Props: faqs: Array<{ id: string, question: string, answer: string }>
+          
+          Note: Component should be React for use in Astro island.
+        
+        output_file: packages/public/src/components/FAQAccordion.tsx
+        
+        notes: |
+          v0.dev will generate the accordion UI.
+          We'll use it as a React island in Astro page.
+
+  - name: Frontend Admin - FAQ Management
+    tasks:
+      - id: install-admin-shadcn-components
+        status: pending
+        description: Add required Shadcn components for admin
+        commands:
+          - cd packages/admin && npx shadcn@canary add table
+          - cd packages/admin && npx shadcn@canary add dialog
+          - cd packages/admin && npx shadcn@canary add textarea
+          - cd packages/admin && npx shadcn@canary add switch
+          - cd packages/admin && npx shadcn@canary add accordion
+        notes: Components for data tables, forms, and FAQ preview
+      
+      - id: create-faq-api-client
+        status: pending
+        description: Create FAQ API hooks with TanStack Query
+        file: packages/admin/src/hooks/use-faq.ts
+        hooks:
+          - useFAQs() - useQuery for all FAQs (GET /api/faq/all)
+          - useFAQ(id) - useQuery for single FAQ (GET /api/faq/:id)
+          - useCreateFAQ() - useMutation for create (POST /api/faq)
+          - useUpdateFAQ() - useMutation for update (PATCH /api/faq/:id)
+          - useDeleteFAQ() - useMutation for delete (DELETE /api/faq/:id)
+          - useReorderFAQs() - useMutation for reorder (POST /api/faq/reorder)
+        features:
+          - Automatic cache invalidation on mutations
+          - Optimistic updates for reordering
+          - Error handling
+          - Loading states
+      
+      - id: create-faq-schema
+        status: pending
+        description: Create Zod schema for FAQ validation
+        file: packages/admin/src/schemas/faq.schema.ts
+        implement:
+          - Define FAQ schema with Zod
+          - question: Required, min 3 chars, max 500 chars
+          - answer: Required, min 10 chars
+          - order: Optional number
+          - isPublished: Boolean, defaults to true
+          - Export schema and infer TypeScript type
+        example: |
+          import { z } from 'zod'
+          
+          export const faqSchema = z.object({
+            question: z.string()
+              .min(3, 'Вопрос должен содержать минимум 3 символа')
+              .max(500, 'Вопрос не должен превышать 500 символов'),
+            answer: z.string()
+              .min(10, 'Ответ должен содержать минимум 10 символов'),
+            order: z.number().optional(),
+            isPublished: z.boolean().default(true),
+          })
+          
+          export type FAQFormData = z.infer<typeof faqSchema>
+      
+      - id: create-faq-list-page
+        status: pending
+        description: Create FAQ list/management page
+        file: packages/admin/src/pages/FAQPage.tsx
+        features:
+          - Display all FAQs in table (Shadcn Table)
+          - Show question, published status, order
+          - Actions: Edit, Delete, Toggle published
+          - "Add FAQ" button to open dialog
+          - Drag-and-drop to reorder (optional: use @dnd-kit/core)
+          - Empty state when no FAQs
+        components_to_create:
+          - FAQTable component
+          - FAQFormDialog component
+          - DeleteConfirmDialog component
+      
+      - id: create-faq-form
+        status: pending
+        description: Create FAQ form with TanStack Form + Zod
+        file: packages/admin/src/components/faq/FAQForm.tsx
+        steps:
+          - Import useForm from @tanstack/react-form
+          - Import faqSchema
+          - Create form with Shadcn Input, Textarea
+          - Add switch for isPublished
+          - Handle onSubmit
+          - Show validation errors in Russian
+        fields:
+          - Question (Input)
+          - Answer (Textarea, rows=5)
+          - Published (Switch)
+        notes: |
+          Use in Dialog for both create and edit.
+          Pass initial values for edit mode.
+      
+      - id: add-faq-route
+        status: pending
+        description: Add FAQ route to admin router
+        file: packages/admin/src/router.tsx
+        steps:
+          - Create faqRoute with path '/faq'
+          - Import FAQPage component
+          - Add to route tree
+          - Protect with beforeLoad auth check
+          - Add link to FAQ page in admin navigation
+
+  - name: Public Site - FAQ Page
+    tasks:
+      - id: create-faq-fetcher
+        status: pending
+        description: Create API fetcher for FAQ data in Astro
+        file: packages/public/src/lib/api.ts
+        implement:
+          - getFAQs() - Fetch published FAQs from API
+          - Use native fetch with API base URL
+          - Error handling
+        example: |
+          const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+          
+          export async function getFAQs() {
+            const response = await fetch(`${API_URL}/faq`);
+            if (!response.ok) throw new Error('Failed to fetch FAQs');
+            return response.json();
+          }
+      
+      - id: create-faq-astro-page
+        status: pending
+        description: Create FAQ page in Astro
+        file: packages/public/src/pages/faq.astro
+        steps:
+          - Import base layout
+          - Fetch FAQs in frontmatter using getFAQs()
+          - Render FAQAccordion React component as island
+          - Add SEO meta tags (title, description in Russian)
+          - Handle empty state (no FAQs)
+          - Handle loading/error states
+        example: |
+          ---
+          import Layout from '../layouts/Layout.astro';
+          import FAQAccordion from '../components/FAQAccordion';
+          import { getFAQs } from '../lib/api';
+          
+          const faqs = await getFAQs();
+          ---
+          
+          <Layout title="Часто Задаваемые Вопросы">
+            <section class="container mx-auto py-12">
+              <FAQAccordion faqs={faqs} client:load />
+            </section>
+          </Layout>
+        notes: |
+          Use client:load for accordion interactivity.
+          Data is fetched at build time for static pages.
+      
+      - id: add-faq-navigation
+        status: pending
+        description: Add FAQ link to public site navigation
+        file: packages/public/src/components/Navigation.astro
+        steps:
+          - Add "FAQ" link to main navigation
+          - Link to /faq page
+
+  - name: Environment & Configuration
+    tasks:
+      - id: update-env-variables
+        status: pending
+        description: Update environment variables for public site API
+        file: .env.example
+        add:
+          - PUBLIC_API_URL (for Astro public site)
+        example: |
+          # Public site API URL
+          PUBLIC_API_URL=http://localhost:3000/api
+        notes: |
+          This allows the public Astro site to fetch data from the API.
+      
+      - id: configure-cors
+        status: pending
+        description: Update CORS to allow public site access
+        file: apps/api/src/main.ts
+        steps:
+          - Update CORS configuration
+          - Allow public site origin for FAQ endpoints
+          - Keep admin endpoints protected
+        example: |
+          app.enableCors({
+            origin: [
+              'http://localhost:5173', // Admin
+              'http://localhost:4321', // Public Astro site
+              process.env.PUBLIC_SITE_URL,
+            ],
+            credentials: true,
+          });
+
+  - name: Testing & Validation
+    tasks:
+      - id: test-faq-crud
+        status: pending
+        description: Test FAQ CRUD operations
+        steps:
+          - Start API: cd apps/api && npm run dev
+          - Start Admin: cd packages/admin && npm run dev
+          - Navigate to /faq in admin
+          - Create new FAQ
+          - Edit FAQ
+          - Toggle published status
+          - Delete FAQ
+          - Reorder FAQs (if implemented)
+          - Verify data persists in database
+      
+      - id: test-public-faq-page
+        status: pending
+        description: Test public FAQ page
+        steps:
+          - Start public site: cd packages/public && npm run dev
+          - Navigate to /faq
+          - Verify FAQs display correctly
+          - Test accordion open/close
+          - Verify only published FAQs show
+          - Test responsive design
+          - Check SEO meta tags
+      
+      - id: test-faq-validation
+        status: pending
+        description: Test FAQ form validation
+        verify:
+          - Question too short shows error
+          - Answer too short shows error
+          - Required fields enforced
+          - Validation messages in Russian
+          - Server validation works
+
+validation:
+  - API /api/faq endpoints work correctly
+  - Admin can create/edit/delete FAQs
+  - Public FAQ page displays published FAQs
+  - FAQ accordion works smoothly
+  - Only published items show on public site
+  - Navigation link works on public site
+  - Form validation works (client and server)
+  - SEO meta tags present
+
+v0_workflow:
+  - title: Generate FAQ Accordion with v0.dev
+    steps:
+      - Go to https://v0.dev
+      - Use the v0_prompt from task v0-faq-accordion
+      - Generate the component
+      - Copy the component code
+      - Paste into packages/public/src/components/FAQAccordion.tsx
+      - Update to accept props: faqs array
+      - Test in Astro page with sample data
+      - Ensure it works as React island (client:load)
+  
+  - title: v0.dev Tips for FAQ Component
+    tips:
+      - Focus on clean, simple layouts
+      - Ensure component works as React island in Astro
+      - Request smooth animations for better UX
+      - Ask for responsive design
+      - Specify Russian text in examples
+      - Can iterate if first result needs improvement
+
+implementation_order:
+  1. Database First:
+     - Add FAQ model (30 min)
+     - Create migrations and seed data (30 min)
+  
+  2. Backend - FAQ Module:
+     - Create FAQ module and service (2 hours)
+     - Create endpoints and DTOs (1 hour)
+     - Test with curl/Postman (30 min)
+  
+  3. Admin - FAQ Management:
+     - Install Shadcn components (15 min)
+     - Create TanStack Query hooks (1 hour)
+     - Create Zod schema (30 min)
+     - Generate FAQ list page (1 hour)
+     - Create FAQ form with TanStack Form (1.5 hours)
+     - Add routes and navigation (30 min)
+     - Test CRUD operations (1 hour)
+  
+  4. Public Site - v0.dev Component:
+     - Generate FAQ accordion with v0.dev (30 min)
+     - Integrate in Astro as React island (30 min)
+  
+  5. Public Site - FAQ Page:
+     - Create API fetcher (30 min)
+     - Create FAQ page (1 hour)
+     - Add navigation link (15 min)
+     - Test public page (30 min)
+  
+  6. Testing & Polish:
+     - End-to-end testing (1-2 hours)
+     - Fix issues (1 hour buffer)
+
+notes:
+  - FAQ is simpler than Gallery - no file uploads
+  - Focus on good UX for accordion component
+  - Russian language for all public-facing text
+  - Admin can be Russian or English (your choice)
+  - Ensure only published items show on public site
+  - TanStack Query caching improves admin performance
+  - Consider drag-and-drop reordering for better UX
+  - Good typography important for readability
+  - Test accordion on mobile devices
+  - SEO important for FAQ page
+
+completion_checklist:
+  - [ ] Database has FAQ model
+  - [ ] FAQ CRUD endpoints work
+  - [ ] Admin FAQ management page functional
+  - [ ] FAQ form validation works (client and server)
+  - [ ] Public FAQ page displays correctly
+  - [ ] FAQ accordion is interactive
+  - [ ] Only published items show on public site
+  - [ ] Navigation link added to public site
+  - [ ] Responsive design works on mobile
+  - [ ] SEO meta tags present on FAQ page
+  - [ ] Error handling works
+  - [ ] CORS configured for public site
+
+time_estimate:
+  - Database setup: 1 hour
+  - Backend FAQ module: 3.5 hours
+  - Admin FAQ management: 4.5 hours
+  - v0.dev component: 1 hour
+  - Public site FAQ page: 2 hours
+  - Testing and fixes: 2 hours
+  - Total: 14 hours (2 days with focus, 3-4 days comfortable pace)
+

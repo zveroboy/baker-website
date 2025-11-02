@@ -1,5 +1,5 @@
+import { prisma } from "@baker/database";
 import { Injectable } from '@nestjs/common';
-import { prisma } from '@baker/database';
 
 @Injectable()
 export class UsersService {

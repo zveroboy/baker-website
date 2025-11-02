@@ -6,6 +6,7 @@ sections:
   - name: Database Setup
     tasks:
       - id: create-admin-user
+        status: completed
         description: Create initial admin user
         file: libs/database/prisma/seed.ts
         steps:
@@ -19,12 +20,14 @@ sections:
   - name: Backend - Authentication Module
     tasks:
       - id: install-auth-packages
-        description: Install authentication dependencies
+        status: completed
+        description: Install authentication dependencies (bcrypt installed)
         commands:
           - cd apps/api && npm install bcrypt
           - cd apps/api && npm install -D @types/bcrypt
       
       - id: create-auth-module
+        status: completed
         description: Create NestJS auth module structure
         files:
           - apps/api/src/app/auth/auth.module.ts
@@ -36,6 +39,7 @@ sections:
           - apps/api/src/app/auth/guards/jwt-auth.guard.ts
         
       - id: create-users-module
+        status: completed
         description: Create users module for user management
         files:
           - apps/api/src/app/users/users.module.ts
@@ -45,6 +49,7 @@ sections:
           - Integrate with Prisma client from @baker/database
       
       - id: implement-jwt-auth
+        status: completed
         description: Implement JWT authentication
         files:
           - apps/api/src/app/auth/auth.service.ts
@@ -57,6 +62,7 @@ sections:
           - expiresIn: "7d"
       
       - id: implement-jwt-strategy
+        status: completed
         description: Create JWT validation strategy
         file: apps/api/src/app/auth/strategies/jwt.strategy.ts
         implement:
@@ -66,6 +72,7 @@ sections:
           - Return user object for request
       
       - id: create-auth-endpoints
+        status: completed
         description: Create authentication endpoints
         file: apps/api/src/app/auth/auth.controller.ts
         endpoints:
@@ -85,44 +92,84 @@ sections:
   - name: Frontend - State Management
     tasks:
       - id: install-state-packages
-        description: Install TanStack Query and dependencies
+        status: completed
+        description: Install TanStack ecosystem and dependencies
         commands:
-          - cd apps/admin && npm install @tanstack/react-query axios
-          - cd apps/admin && npm install react-router-dom
-        notes: TanStack Query for API state, axios for HTTP, react-router for routing
+          - cd packages/admin && npm install @tanstack/react-query @tanstack/react-router @tanstack/react-form ky zod
+          - cd packages/admin && npm install -D @tanstack/router-devtools @tanstack/react-query-devtools
+        notes_updated: |
+          With Zod 3.24.0+, @tanstack/zod-form-adapter is deprecated.
+          Pass Zod schemas directly to validators - no adapter needed!
+        notes: |
+          Complete TanStack Stack:
+          - TanStack Query for API/server state
+          - TanStack Router for type-safe routing
+          - TanStack Form for form state management
+          - Zod for schema validation
+          - ky for HTTP client (modern fetch-based)
       
       - id: create-query-client
+        status: completed
         description: Set up TanStack Query client
-        file: apps/admin/src/lib/query-client.ts
+        file: packages/admin/src/lib/query-client.ts
         implement:
           - Create QueryClient with default options
           - Configure retry, staleTime, cacheTime
           - Export queryClient instance
       
       - id: create-api-client
-        description: Create axios API client with auth interceptor
-        file: apps/admin/src/lib/api.ts
+        status: completed
+        description: Create ky API client with auth hooks (localStorage approach)
+        file: packages/admin/src/lib/api.ts
         implement:
-          - Base URL: http://localhost:3000/api
-          - Request interceptor to add Authorization header from localStorage
-          - Response interceptor to handle 401 (clear token, redirect to login)
+          - Create ky instance with base URL: http://localhost:3000/api
+          - Add beforeRequest hook to inject Authorization header from localStorage
+          - Add beforeError hook to handle 401 (clear token, redirect to login)
           - Export api instance
           - Helper functions: getToken(), setToken(), clearToken()
+        notes: Using localStorage for Sprint 2. Migration to httpOnly cookies planned for Sprint 8 (see secure_implementation_with_httponly_cookies section below)
+        example: |
+          import ky from 'ky';
+          
+          export const api = ky.create({
+            prefixUrl: 'http://localhost:3000/api',
+            hooks: {
+              beforeRequest: [
+                request => {
+                  const token = localStorage.getItem('token');
+                  if (token) {
+                    request.headers.set('Authorization', `Bearer ${token}`);
+                  }
+                }
+              ],
+              beforeError: [
+                error => {
+                  if (error.response?.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                  }
+                  return error;
+                }
+              ]
+            }
+          });
       
       - id: create-auth-context
-        description: Create simple auth context
-        file: apps/admin/src/contexts/AuthContext.tsx
+        status: completed
+        description: Create simple auth context  
+        file: packages/admin/src/contexts/AuthContext.tsx
         implement:
           - Context with: user, isAuthenticated, logout()
           - Provider component
           - useAuth hook
-          - Store token in localStorage only
+          - Store token in localStorage (will migrate to httpOnly cookies in Sprint 8)
           - User data comes from TanStack Query
-        notes: Minimal context - TanStack Query handles the heavy lifting
+        notes: Minimal context - TanStack Query handles the heavy lifting. Using localStorage for simplicity in Sprint 2, production-grade httpOnly cookies planned for Sprint 8.
       
       - id: create-auth-hooks
+        status: completed
         description: Create TanStack Query auth hooks
-        file: apps/admin/src/hooks/use-auth.ts
+        file: packages/admin/src/hooks/use-auth.ts
         hooks:
           - useLogin() - useMutation for login (POST /auth/login)
           - useCurrentUser() - useQuery for current user (GET /auth/me)
@@ -136,9 +183,10 @@ sections:
   - name: v0.dev Component Generation
     tasks:
       - id: v0-login-page
-        description: Generate login page with form
+        status: completed
+        description: Generate login UI (will wire with TanStack Form + Zod)
         v0_prompt: |
-          Create a login page for an admin panel with:
+          Create a login page UI for an admin panel with:
           
           Layout:
           - Centered card on full-screen background
@@ -150,57 +198,106 @@ sections:
           - Email input with label "Email"
           - Password input with label "Пароль" (Password)
           - "Показать пароль" toggle (Show password)
-          - Remember me checkbox (optional)
           - Submit button: "Войти" (Sign In)
-          - Loading state for button
           - Error message display area
           
-          Features:
-          - Form validation (email format, required fields)
-          - Show error messages in Russian
-          - Disable button while submitting
+          Requirements:
+          - Use Shadcn UI Input and Button components
+          - Use Tailwind v4
           - Clean, professional admin look
-          - Use Tailwind v4 and Shadcn UI
           - Responsive design
+          - Show loading state and error messages in Russian
           
-          Note: Return only the form component, I'll handle state management separately
+          Note: Just create the UI layout. I will integrate TanStack Form for state management.
         
-        output_file: apps/admin/src/components/auth/LoginForm.tsx
+        output_file: packages/admin/src/components/auth/LoginFormUI.tsx
         
-        alternative_simpler_prompt: |
-          Create an admin login form with email, password fields, and submit button.
-          Use Shadcn UI form components, Tailwind v4.
-          Labels in Russian: Email, Пароль, button "Войти".
-          Show loading state and error messages.
+        notes: |
+          v0.dev will generate basic form UI. We'll wrap it with TanStack Form.
+          Don't use Shadcn form components - we'll use TanStack Form instead.
   
   - name: Frontend - Pages & Routing
     tasks:
        - id: setup-routing
-         description: Set up React Router and Query Provider
-         file: apps/admin/src/App.tsx
+         status: completed
+         description: Set up TanStack Router and Query Provider
+         file: packages/admin/src/router.tsx
+         steps:
+          - Create route tree with TanStack Router
+          - Define routes: / (root), /login, /dashboard
+          - Add beforeLoad hook to dashboard route for auth check
+          - Export router instance
+        example: |
+          import { createRouter, createRootRoute, createRoute } from '@tanstack/react-router'
+          import LoginPage from './pages/LoginPage'
+          import DashboardPage from './pages/DashboardPage'
+          
+          const rootRoute = createRootRoute()
+          
+          const loginRoute = createRoute({
+            getParentRoute: () => rootRoute,
+            path: '/login',
+            component: LoginPage,
+          })
+          
+          const dashboardRoute = createRoute({
+            getParentRoute: () => rootRoute,
+            path: '/',
+            component: DashboardPage,
+            beforeLoad: ({ location }) => {
+              const token = localStorage.getItem('token')
+              if (!token) {
+                throw redirect({ to: '/login', search: { redirect: location.href } })
+              }
+            }
+          })
+          
+          const routeTree = rootRoute.addChildren([loginRoute, dashboardRoute])
+          export const router = createRouter({ routeTree })
+      
+       - id: setup-app-providers
+         status: completed
+         description: Set up App.tsx with providers
+         file: packages/admin/src/App.tsx
          steps:
           - Import QueryClientProvider from @tanstack/react-query
-          - Import queryClient
-          - Wrap app in QueryClientProvider
-          - Import BrowserRouter, Routes, Route from react-router-dom
-          - Create routes for /login and / (dashboard)
-          - Wrap dashboard route in ProtectedRoute component
-          - Add AuthProvider wrapper
+          - Import RouterProvider from @tanstack/react-router
+          - Import router from ./router
+          - Wrap app in QueryClientProvider then RouterProvider
+          - Add ReactQueryDevtools (optional)
+          - Add TanStackRouterDevtools (optional)
+        example: |
+          import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+          import { RouterProvider } from '@tanstack/react-router'
+          import { router } from './router'
+          
+          const queryClient = new QueryClient()
+          
+          function App() {
+            return (
+              <QueryClientProvider client={queryClient}>
+                <RouterProvider router={router} />
+              </QueryClientProvider>
+            )
+          }
       
              - id: create-login-page
+         status: completed
          description: Create login page
-         file: apps/admin/src/pages/LoginPage.tsx
+         file: packages/admin/src/pages/LoginPage.tsx
          steps:
            - Import LoginForm from v0.dev component
+           - Import useNavigate from @tanstack/react-router
            - Use useLogin() hook from TanStack Query
            - Handle form submission with login.mutate()
-           - On success, store token and redirect to dashboard
+           - On success, store token and navigate to dashboard using navigate({ to: '/' })
            - Show error from mutation
            - Loading state from mutation.isPending
       
       - id: create-dashboard-placeholder
+        status: completed
         description: Create simple dashboard page
-        file: apps/admin/src/pages/DashboardPage.tsx
+        file: packages/admin/src/pages/DashboardPage.tsx
         content:
           - Welcome message with user name
           - "Добро пожаловать в панель администратора"
@@ -208,51 +305,146 @@ sections:
           - Placeholder for future dashboard content
       
              - id: create-protected-route
-         description: Create protected route wrapper
-         file: apps/admin/src/components/auth/ProtectedRoute.tsx
-         implement:
-          - Use useCurrentUser() hook to check authentication
-          - If isLoading, show loading spinner
-          - If error or no user, redirect to /login
-          - If user exists, render children
-          - TanStack Query automatically validates token on mount
+         status: completed
+         description: Protected routes using TanStack Router beforeLoad
+         implementation:
+          - No separate ProtectedRoute component needed
+          - Use beforeLoad hook in route definition (see setup-routing example)
+          - Check token existence in beforeLoad
+          - Throw redirect to /login if not authenticated
+          - TanStack Router handles navigation automatically
+        notes: |
+          TanStack Router uses beforeLoad instead of wrapper components:
+          - Cleaner, type-safe approach
+          - No prop drilling
+          - Better code splitting
+          - Automatic loading states
 
   - name: Component Integration
     tasks:
       - id: install-shadcn-components
+        status: completed
         description: Add required Shadcn components for login
         commands:
-          - cd apps/admin && npx shadcn@canary add form
-          - cd apps/admin && npx shadcn@canary add input
-          - cd apps/admin && npx shadcn@canary add label
-          - cd apps/admin && npx shadcn@canary add card
-        notes: Form components needed for login page
+          - cd packages/admin && npx shadcn@canary add input
+          - cd packages/admin && npx shadcn@canary add label
+          - cd packages/admin && npx shadcn@canary add button
+          - cd packages/admin && npx shadcn@canary add card
+        notes: UI components for login page. No Shadcn form component - using TanStack Form instead.
+      
+      - id: create-login-form-schema
+        status: completed
+        description: Create Zod schema for login validation
+        file: packages/admin/src/schemas/auth.schema.ts
+        implement:
+          - Define login schema with Zod
+          - Email: must be valid email format
+          - Password: minimum 6 characters
+          - Export schema and infer TypeScript type
+        example: |
+          import { z } from 'zod'
+          
+          export const loginSchema = z.object({
+            email: z.string().email('Неверный формат email'),
+            password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
+          })
+          
+          export type LoginFormData = z.infer<typeof loginSchema>
       
       - id: integrate-login-form
-        description: Integrate v0.dev login form
+        status: completed
+        description: Create LoginForm with TanStack Form + Zod
+        file: packages/admin/src/components/auth/LoginForm.tsx
         steps:
-          - Copy LoginForm from v0.dev to apps/admin/src/components/auth/LoginForm.tsx
-          - Remove any Next.js imports (replace Link with regular a tags)
-          - Ensure all Shadcn imports use @/ paths
-          - Accept onSubmit prop: (email: string, password: string) => Promise<void>
-          - Accept error prop: string | null
-          - Accept isLoading prop: boolean
-          - Test component renders correctly
+          - Import useForm from @tanstack/react-form
+          - Import loginSchema (Zod schema)
+          - Use v0.dev UI as the layout/styling reference
+          - Wrap form fields with form.Field components
+          - Add Zod validation directly (no adapter needed with Zod 3.24.0+)
+          - Handle onSubmit with TanStack Form
+        notes: |
+          With Zod 3.24.0+, no zodValidator adapter is needed.
+          Pass Zod schemas directly to validators.
+        example: |
+          import { useForm } from '@tanstack/react-form'
+          import { loginSchema } from '../schemas/auth.schema'
+          
+          export function LoginForm({ onSubmit, isSubmitting, serverError }) {
+            const form = useForm({
+              defaultValues: { email: '', password: '' },
+              onSubmit: async ({ value }) => onSubmit(value.email, value.password),
+              // No validatorAdapter needed!
+            })
+            
+            return (
+              <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }}>
+                <form.Field
+                  name="email"
+                  validators={{ 
+                    onChange: loginSchema.shape.email  // Direct Zod schema
+                  }}
+                >
+                  {(field) => (
+                    <Input
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                  )}
+                </form.Field>
+                {/* Similar for password field */}
+                <Button type="submit" disabled={isSubmitting}>Войти</Button>
+              </form>
+            )
+          }
       
              - id: wire-up-authentication
+         status: completed
          description: Connect login form to auth logic
-         file: apps/admin/src/pages/LoginPage.tsx
+         file: packages/admin/src/pages/LoginPage.tsx
          implementation:
-           - Use useLogin() mutation hook
-           - Pass mutation.mutate to form onSubmit
-           - Pass mutation.error to form error prop
-           - Pass mutation.isPending to form isLoading prop
-           - Use useNavigate to redirect on success
-           - TanStack Query handles all state automatically
+           - Import useNavigate from @tanstack/react-router
+           - Use useLogin() mutation hook from TanStack Query
+           - Pass mutation handler to LoginForm onSubmit
+           - Pass mutation.isPending to form for loading state
+           - Pass server errors to form
+           - On success: store token, then navigate({ to: '/' })
+           - TanStack Form handles validation, TanStack Query handles API, TanStack Router handles navigation
+        example: |
+          import { useNavigate } from '@tanstack/react-router'
+          import { useLogin } from '../hooks/use-auth'
+          import LoginForm from '../components/auth/LoginForm'
+          
+          export default function LoginPage() {
+            const navigate = useNavigate()
+            const login = useLogin()
+            
+            const handleSubmit = async (email: string, password: string) => {
+              await login.mutateAsync({ email, password }, {
+                onSuccess: (data) => {
+                  localStorage.setItem('token', data.access_token)
+                  navigate({ to: '/' })
+                }
+              })
+            }
+            
+            return <LoginForm 
+              onSubmit={handleSubmit}
+              isSubmitting={login.isPending}
+              serverError={login.error?.message}
+            />
+          }
+        notes: |
+          Full TanStack Stack working together:
+          - TanStack Form: Client-side validation, form state
+          - Zod: Schema validation (email format, password length)
+          - TanStack Query: Server mutation (API call)
+          - TanStack Router: Type-safe navigation after login
 
   - name: Environment & Configuration
     tasks:
       - id: update-env
+        status: completed
         description: Update environment variables
         file: .env.example
         add:
@@ -260,22 +452,27 @@ sections:
           - API_URL for admin app
         
       - id: configure-api-proxy
+        status: completed
         description: Configure Vite proxy for API calls
-        file: apps/admin/vite.config.ts
+        file: packages/admin/vite.config.ts
         add:
           - server.proxy configuration
           - Proxy /api to http://localhost:3000/api
           - Enables API calls without CORS issues in development
+        notes: |
+          With Vite proxy, the admin app can use relative URLs (/api/*)
+          instead of absolute URLs (http://localhost:3000/api/*).
+          This avoids CORS issues in development.
 
   - name: Testing & Validation
     tasks:
       - id: test-login-flow
         description: Test complete authentication flow
         steps:
-          - Start API: nx serve api
-          - Start Admin: nx serve admin
-          - Create seed data: cd libs/database && npx prisma db seed
-          - Navigate to http://localhost:4200
+          - Start API: cd packages/api && npm run dev
+          - Start Admin: cd packages/admin && npm run dev
+          - Create seed data: cd packages/database && npm run db:seed
+          - Navigate to http://localhost:5173
           - Should redirect to /login
           - Enter admin credentials
           - Should redirect to dashboard after login
@@ -294,10 +491,15 @@ sections:
       - id: test-error-handling
         description: Test error scenarios
         verify:
-          - Wrong password shows error
-          - Non-existent user shows error
+          - Wrong password shows error (server error from API)
+          - Non-existent user shows error (server error from API)
           - Network error handled gracefully
-          - Form validation works (email format, required fields)
+          - Client-side validation works (Zod schema):
+            - Invalid email format shows error
+            - Password too short shows error
+            - Required field validation
+          - Real-time validation as user types
+          - Error messages in Russian
 
 validation:
   - API /api/auth/login endpoint returns JWT token
@@ -359,31 +561,101 @@ notes:
   - Start with backend - easier to test with curl
   - Use bcrypt for password hashing (industry standard)
   - JWT secret should be strong in production
-  - localStorage for token is fine for admin panel
-  - TanStack Query advantages:
-    - Automatic caching and refetching
-    - Built-in loading and error states
+  - Token Storage for Sprint 2: localStorage (simple, fast to implement)
+  - Sprint 8 Security Upgrade: Migrate to httpOnly cookies (XSS-safe)
+  - localStorage is acceptable for development/MVP, not ideal for production
+  - TanStack Stack advantages (Query + Router + Form):
+    - TanStack Query: Automatic caching, refetching, loading/error states for server data
+    - TanStack Router: Type-safe routing, built-in auth guards, loader pattern
+    - TanStack Form: Granular reactivity, headless form state, no re-renders
+    - Zod: Runtime validation, type inference, composable schemas
+    - Perfect integration across the entire TanStack ecosystem
     - No manual state management needed
-    - Less code than Zustand for this use case
-    - Perfect for API-driven state
-  - Consider httpOnly cookies for production (optional enhancement)
+    - Less code than alternatives (Zustand + React Router + React Hook Form)
+    - Superior TypeScript support across the stack (end-to-end type safety)
   - Admin panel can be in Russian or English (your preference)
-  - Focus on security: validate tokens, hash passwords, protect routes
+  - Focus on security: validate tokens, hash passwords, protect routes, prevent XSS
+
+future_sprint_8_security_upgrade_httponly_cookies:
+  note: This section is for Sprint 8 (Production Readiness) implementation. Do not implement in Sprint 2.
+  
+  backend_changes:
+    - Update auth.controller.ts login endpoint to set httpOnly cookie:
+      |
+      @Post('login')
+      async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
+        const result = await this.authService.login(...);
+        res.cookie('access_token', result.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+        return { user: result.user }; // Don't send token in response
+      }
+    
+    - Add logout endpoint to clear cookie:
+      |
+      @Post('logout')
+      logout(@Res({ passthrough: true }) res: Response) {
+        res.clearCookie('access_token');
+        return { message: 'Logged out' };
+      }
+    
+    - Update JWT strategy to extract from cookie:
+      |
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request) => request?.cookies?.access_token
+      ])
+    
+    - Install cookie-parser: npm install cookie-parser @types/cookie-parser
+    - Enable in main.ts: app.use(cookieParser())
+  
+  frontend_changes:
+    - Remove localStorage code completely
+    - ky requests will automatically send cookies with { credentials: 'include' }
+    - No need to manually add Authorization header
+    - Update ky config:
+      |
+      export const api = ky.create({
+        prefixUrl: 'http://localhost:3000/api',
+        credentials: 'include', // Send cookies with requests
+        hooks: {
+          beforeError: [
+            error => {
+              if (error.response?.status === 401) {
+                window.location.href = '/login';
+              }
+              return error;
+            }
+          ]
+        }
+      });
+  
+  benefits:
+    - Immune to XSS attacks
+    - Automatic CSRF protection with sameSite: 'strict'
+    - Token never exposed to JavaScript
+    - More secure for production
+
   
 completion_checklist:
   - [ ] Database has admin user seeded
   - [ ] POST /api/auth/login endpoint works
   - [ ] GET /api/auth/me endpoint works (protected)
   - [ ] JWT tokens generated and validated correctly
-  - [ ] Admin app has routing configured
-  - [ ] Login page displays and works
-  - [ ] Successful login stores token and redirects
+  - [ ] TanStack Router configured with route tree
+  - [ ] TanStack Query client set up
+  - [ ] Login page displays with TanStack Form
+  - [ ] Zod validation works (email format, password min length)
+  - [ ] Real-time field validation displays errors in Russian
+  - [ ] Successful login stores token and navigates to dashboard
   - [ ] Dashboard shows logged-in user info
   - [ ] Logout clears token and redirects
-  - [ ] Protected routes require authentication
+  - [ ] Protected routes use beforeLoad hook
   - [ ] Token persists across page refreshes
-  - [ ] Error messages display correctly
-  - [ ] Form validation works
+  - [ ] Server error messages display correctly
+  - [ ] Client validation and server validation both work
 
 time_estimate:
   - Backend setup: 3-4 hours
