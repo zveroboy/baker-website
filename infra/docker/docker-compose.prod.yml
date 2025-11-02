@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # NestJS API
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: baker-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    networks:
+      - baker-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # React Admin App
+  admin:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.admin
+      args:
+        VITE_API_URL: https://kat-sweetcake.ru/api
+    container_name: baker-admin
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    networks:
+      - baker-network
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Astro Public Site
+  public:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.public
+      args:
+        PUBLIC_API_URL: https://kat-sweetcake.ru/api
+    container_name: baker-public
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    networks:
+      - baker-network
+
+networks:
+  baker-network:
+    driver: bridge

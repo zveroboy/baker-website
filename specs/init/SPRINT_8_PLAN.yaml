@@ -1,7 +1,7 @@
-sprint: 7
+sprint: 8
 goal: Gallery - Visual Showcase
 duration: 4-5 days
-note: FAQ was moved to Sprint 3 for earlier delivery. This sprint focuses solely on Gallery functionality.
+note: FAQ was moved to Sprint 3, Deployment added as Sprint 4. This sprint focuses solely on Gallery functionality.
 
 sections:
   - name: Database Setup
