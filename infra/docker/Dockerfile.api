@@ -19,6 +19,8 @@ RUN npm ci
 
 # Build the project
 COPY --from=pruner /app/out/full/ .
+# Copy tsconfig.base.json that turbo prune misses
+COPY --from=pruner /app/tsconfig.base.json ./tsconfig.base.json
 RUN npm run build --workspace=@baker/database
 RUN npm run build --workspace=@baker/api
 
