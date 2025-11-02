@@ -7,7 +7,6 @@ WORKDIR /app
 COPY package*.json ./
 COPY turbo.json ./
 COPY packages/api/package*.json ./packages/api/
-COPY libs/database/package*.json ./libs/database/
 COPY packages/database/package*.json ./packages/database/
 
 # Install all dependencies
@@ -16,12 +15,8 @@ RUN npm ci
 # Copy source code
 COPY packages/api ./packages/api
 COPY packages/database ./packages/database
-COPY libs/database ./libs/database
 
-# Generate Prisma Client
-RUN cd packages/database && npm run build
-
-# Build database package
+# Generate Prisma Client and build database package
 RUN cd packages/database && npm run build
 
 # Build API
