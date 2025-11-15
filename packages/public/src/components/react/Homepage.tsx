@@ -1,6 +1,9 @@
+import Image from "next/image"
+import Link from "next/link"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import heroImage from "@/assets/hero-cakes.jpeg"
 import { Wheat, Leaf, Cake, Clock, Phone, Mail, MapPin, Facebook, Instagram } from "lucide-react"
 
 export default function HomePage() {
@@ -9,7 +12,15 @@ export default function HomePage() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-background via-secondary/20 to-accent/10 py-20 md:py-32">
+      <section className="relative isolate overflow-hidden py-20 md:py-32">
+        <Image
+          src={heroImage}
+          alt="Ассортимент свежей выпечки"
+          fill
+          priority
+          className="absolute inset-0 -z-20 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-background/85 via-background/70 to-background/55 backdrop-blur-sm" />
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 text-balance">
@@ -20,10 +31,10 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-base">
-                <a href="/cakes">Посмотреть меню</a>
+                <Link href="/cakes">Посмотреть меню</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="text-base bg-transparent">
-                <a href="/contact">Заказать торт</a>
+              <Button asChild size="lg" variant="outline" className="text-base">
+                <Link href="/contact">Заказать торт</Link>
               </Button>
             </div>
           </div>
@@ -33,51 +44,51 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="py-16 md:py-24">
         <div className="container">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12">Почему выбирают нас</h2>
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">Почему выбирают нас</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-border hover:border-primary/50 transition-colors">
+            <Card className="hover:border-primary/40 transition-colors">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center gap-4">
                   <div className="p-3 rounded-full bg-primary/10">
                     <Wheat className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold">Свежая выпечка</h3>
+                  <h3 className="font-serif text-xl font-semibold text-foreground">Свежая выпечка</h3>
                   <p className="text-muted-foreground text-sm">Выпекаем каждый день свежие хлебобулочные изделия</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border hover:border-primary/50 transition-colors">
+            <Card className="hover:border-primary/40 transition-colors">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center gap-4">
                   <div className="p-3 rounded-full bg-primary/10">
                     <Leaf className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold">Натуральные ингредиенты</h3>
+                  <h3 className="font-serif text-xl font-semibold text-foreground">Натуральные ингредиенты</h3>
                   <p className="text-muted-foreground text-sm">Используем только качественные и натуральные продукты</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border hover:border-primary/50 transition-colors">
+            <Card className="hover:border-primary/40 transition-colors">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center gap-4">
                   <div className="p-3 rounded-full bg-primary/10">
                     <Cake className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold">Торты на заказ</h3>
+                  <h3 className="font-serif text-xl font-semibold text-foreground">Торты на заказ</h3>
                   <p className="text-muted-foreground text-sm">Создаем уникальные торты для ваших особых событий</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border hover:border-primary/50 transition-colors">
+            <Card className="hover:border-primary/40 transition-colors">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center gap-4">
                   <div className="p-3 rounded-full bg-primary/10">
                     <Clock className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold">Быстрая доставка</h3>
+                  <h3 className="font-serif text-xl font-semibold text-foreground">Быстрая доставка</h3>
                   <p className="text-muted-foreground text-sm">Доставляем заказы в удобное для вас время</p>
                 </div>
               </CardContent>
@@ -87,9 +98,9 @@ export default function HomePage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 md:py-24 bg-muted/30">
+      <section className="py-16 md:py-24 bg-muted/40">
         <div className="container">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12">Контакты</h2>
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">Контакты</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="space-y-6">
               <Card>
@@ -99,7 +110,7 @@ export default function HomePage() {
                       <Phone className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1">Телефон</h3>
+                      <h3 className="font-semibold mb-1 text-foreground">Телефон</h3>
                       <p className="text-muted-foreground">+7 (XXX) XXX-XX-XX</p>
                     </div>
                   </div>
@@ -113,7 +124,7 @@ export default function HomePage() {
                       <Mail className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1">Email</h3>
+                      <h3 className="font-semibold mb-1 text-foreground">Email</h3>
                       <p className="text-muted-foreground">info@bakery.ru</p>
                     </div>
                   </div>
@@ -127,7 +138,7 @@ export default function HomePage() {
                       <MapPin className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1">Адрес</h3>
+                      <h3 className="font-semibold mb-1 text-foreground">Адрес</h3>
                       <p className="text-muted-foreground">
                         г. Москва, ул. Примерная, д. 1<br />
                         Пн-Вс: 8:00 - 20:00
@@ -155,30 +166,30 @@ export default function HomePage() {
         <div className="container">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="font-serif text-xl font-bold mb-4">Пекарня</h3>
+              <h3 className="font-serif text-xl font-bold mb-4 text-foreground">Пекарня</h3>
               <p className="text-muted-foreground text-sm">Свежая выпечка из натуральных ингредиентов каждый день</p>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Навигация</h4>
+              <h4 className="font-semibold mb-4 text-foreground">Навигация</h4>
               <nav className="flex flex-col gap-2">
-                <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Главная
-                </a>
-                <a href="/cakes" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                </Link>
+                <Link href="/cakes" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Торты
-                </a>
-                <a href="/gallery" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                </Link>
+                <Link href="/gallery" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Галерея
-                </a>
-                <a href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                </Link>
+                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Контакты
-                </a>
+                </Link>
               </nav>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Социальные сети</h4>
+              <h4 className="font-semibold mb-4 text-foreground">Социальные сети</h4>
               <div className="flex gap-4">
                 <a
                   href="#"

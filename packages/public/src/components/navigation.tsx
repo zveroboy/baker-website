@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -16,25 +17,25 @@ export function Navigation() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="container flex h-16 items-center justify-between">
-        <a href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <span className="font-serif text-2xl font-bold text-primary">Пекарня</span>
-        </a>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+              className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
           <Button asChild className="ml-4">
-            <a href="/order">Заказать</a>
+            <Link href="/order">Заказать</Link>
           </Button>
         </nav>
 
@@ -49,19 +50,19 @@ export function Navigation() {
           <SheetContent side="right">
             <nav className="flex flex-col gap-4 mt-8">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className="text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                  className="text-lg font-medium text-foreground/70 transition-colors hover:text-foreground"
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
               <Button asChild className="mt-4">
-                <a href="/order" onClick={() => setIsOpen(false)}>
+                <Link href="/order" onClick={() => setIsOpen(false)}>
                   Заказать
-                </a>
+                </Link>
               </Button>
             </nav>
           </SheetContent>

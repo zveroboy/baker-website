@@ -1,8 +1,6 @@
-# build output
-dist/
-
-# generated types
-.astro/
+# Next.js build output
+.next/
+out/
 
 # dependencies
 node_modules/
@@ -16,9 +14,14 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.local
+.env.*.local
 
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
+
+# turbo
+.turbo/

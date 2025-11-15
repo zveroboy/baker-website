@@ -1,46 +1,63 @@
-# Astro Starter Kit: Basics
+# @baker/public - Next.js Frontend
 
-```sh
-npm create astro@latest -- --template basics
-```
+A modern Next.js 16 application for the baker's personal website built with React 19, Tailwind CSS, and shadcn/ui components.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## 🏗️ Project Structure
 
 ```text
 /
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
+├── public/              # Static assets (favicon, images)
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx   # Root layout with metadata
+│   │   ├── page.tsx     # Homepage
+│   │   ├── globals.css  # Global styles with Tailwind
+│   │   ├── cakes/
+│   │   ├── contact/
+│   │   ├── faq/
+│   │   ├── gallery/
+│   │   ├── menu/
+│   │   ├── about/
+│   │   └── order/
+│   ├── components/
+│   │   ├── navigation.tsx
+│   │   ├── react/
+│   │   │   └── Homepage.tsx
+│   │   └── ui/          # shadcn/ui components
+│   └── lib/
+│       └── utils.ts
+├── next.config.ts
+├── tsconfig.json
+├── tailwind.config.ts
+├── postcss.config.mjs
 └── package.json
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## 🚀 Commands
 
-## 🧞 Commands
+All commands are run from the root of the workspace using `turbo`:
 
-All commands are run from the root of the project, from a terminal:
+| Command                  | Action                                    |
+|:-------------------------|:------------------------------------------|
+| `npm run dev`            | Start local dev server at `localhost:3000` |
+| `npm run build`          | Build for production to `./.next/`        |
+| `npm run start`          | Start production server                   |
+| `npm run lint`           | Run Biome linter on source                |
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## 🔧 Stack
 
-## 👀 Want to learn more?
+- **Framework**: [Next.js 16](https://nextjs.org/) with App Router
+- **UI Library**: [React 19](https://react.dev/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) with CSS variables
+- **Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Type Safety**: [TypeScript](https://www.typescriptlang.org/)
+- **Linting**: [Biome](https://biomejs.dev/)
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## 📝 Notes
+
+- Uses App Router for modern Next.js development
+- Metadata configured in `layout.tsx` for SEO
+- Path alias `@/*` configured for cleaner imports
+- Global styles in `src/app/globals.css` with Tailwind directives
+- Server Components by default with selective client components (marked with `"use client"`)
