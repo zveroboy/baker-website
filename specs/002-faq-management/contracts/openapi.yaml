@@ -1,0 +1,158 @@
+openapi: 3.0.0
+info:
+  title: Baker FAQ API
+  version: 1.0.0
+paths:
+  /api/faqs:
+    get:
+      summary: Get public FAQs
+      responses:
+        '200':
+          description: List of published FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Faq'
+
+  /api/admin/faqs:
+    get:
+      summary: Get all FAQs (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Faq'
+    post:
+      summary: Create FAQ
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFaqDto'
+      responses:
+        '201':
+          description: Created FAQ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faq'
+
+  /api/admin/faqs/{id}:
+    patch:
+      summary: Update FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFaqDto'
+      responses:
+        '200':
+          description: Updated FAQ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faq'
+    delete:
+      summary: Delete FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted successfully
+
+  /api/admin/faqs/reorder:
+    put:
+      summary: Reorder FAQs
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  order:
+                    type: integer
+      responses:
+        '200':
+          description: Reordered successfully
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Faq:
+      type: object
+      properties:
+        id:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+        order:
+          type: integer
+        isPublished:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateFaqDto:
+      type: object
+      required:
+        - question
+        - answer
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        isPublished:
+          type: boolean
+    UpdateFaqDto:
+      type: object
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        isPublished:
+          type: boolean
+

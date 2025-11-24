@@ -39,9 +39,25 @@ export interface FAQ {
   id: string;
   question: string;
   answer: string;
+  order: number;
+  isPublished: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
+
+// DTOs for FAQ
+export type CreateFaqDto = Pick<FAQ, 'question' | 'answer'> & {
+  isPublished?: boolean;
+};
+
+export type UpdateFaqDto = Partial<CreateFaqDto>;
+
+export interface ReorderFaqItem {
+  id: string;
+  order: number;
+}
+
+export type ReorderFaqDto = ReorderFaqItem[];
 
 export interface Gallery {
   id: string;

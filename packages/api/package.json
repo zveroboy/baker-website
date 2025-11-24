@@ -10,25 +10,21 @@
   },
   "dependencies": {
     "@baker/database": "*",
-    "@baker/shared-types": "*",
-    "@nestjs/common": "^11.1.8",
-    "@nestjs/core": "^11.1.8",
-    "@nestjs/jwt": "^11.0.1",
-    "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.1.8",
-    "bcrypt": "^6.0.0",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.2",
-    "passport-jwt": "^4.0.1",
+    "@inversifyjs/http-core": "^4.5.0",
+    "@inversifyjs/http-hono": "^4.5.0",
+    "better-auth": "^1.4.1",
+    "hono": "^4.10.6",
+    "inversify": "^7.10.4",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.8",
     "@swc/core": "^1.5.7",
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^20.19.9",
+    "@types/node": "^20.19.25",
     "concurrently": "^9.0.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.13"
   }
 }

@@ -1,0 +1,3 @@
+-- AlterTable FAQ
+ALTER TABLE "faqs" ADD COLUMN "order" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "faqs" ADD COLUMN "is_published" BOOLEAN NOT NULL DEFAULT false;
